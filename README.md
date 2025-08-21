@@ -21,12 +21,13 @@ uv sync
 2. Install development dependencies:
 ```bash
 uv sync --extra dev
+pip install -e .
 ```
 
 3. Run commands in the virtual environment:
 ```bash
 uv run python script.py
-uv run jupyter notebook
+uv run jupyter lab
 ```
 
 4. Run tests:
