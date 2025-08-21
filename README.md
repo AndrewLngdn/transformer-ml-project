@@ -15,12 +15,23 @@ A personal project for developing and testing transformer models.
 
 1. Install dependencies:
 ```bash
-pip install -r requirements.txt
+uv sync
 ```
 
-2. Run tests:
+2. Install development dependencies:
 ```bash
-python -m pytest tests/
+uv sync --extra dev
+```
+
+3. Run commands in the virtual environment:
+```bash
+uv run python script.py
+uv run jupyter notebook
+```
+
+4. Run tests:
+```bash
+uv run pytest tests/
 ```
 
 ## Usage
