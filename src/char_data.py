@@ -35,7 +35,7 @@ def decode(t: torch.Tensor, itos) -> str:
     for int in ints:
         try:
             chars.append(itos[int])
-        except KeyError as e:
+        except KeyError:
             print(f"{int} isn't in vocabulary")
     
     return "".join(chars)

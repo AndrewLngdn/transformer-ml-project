@@ -1,4 +1,5 @@
-import time, torch
+import time
+import torch
 
 print("torch:", torch.__version__)
 print("MPS available:", torch.backends.mps.is_available())
