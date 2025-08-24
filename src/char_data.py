@@ -1,7 +1,6 @@
 import torch
 from typing import Tuple, Dict, List
-
-s = "Jeeves (born Reginald Jeeves, nicknamed Reggie[1]) is a fictional character in a series of comedic short stories and novels by the English author P. G. Wodehouse. Jeeves is the highly competent valet of a wealthy and idle young Londoner named Bertie Wooster. First appearing in print in 1915, Jeeves continued to feature in Wodehouse's work until his last completed novel, Aunts Aren't Gentlemen, in 1974. "
+from torch.utils.data import Dataset
 
 
 def build_char_vocab(s: str) -> Tuple[List[str], Dict[str, int]]:
@@ -47,33 +46,24 @@ def split_ids(chars_tensor: torch.Tensor, frac=0.8) -> Tuple[torch.Tensor, torch
     return train_tensor, val_tensor
 
 
+class CharDataset(Dataset):
+    def __init__(self, tokens: torch.Tensor, T=16):
+        super().__init__()
+        self.tokens = tokens
+        self.T = T
+
+    def __len__(self) -> int:
+        """
+        len() is the number of windows that the dataset can provide. 
+        """
+        total_window_len = self.T + 1
+        return len(self.tokens) - total_window_len + 1
+    
+    def __getitem__(self, i) -> Tuple[torch.Tensor, torch.Tensor]:
+        if i < 0 or i >= len(self):
+            raise IndexError()
+        
+        return self.tokens[i:i+self.T], self.tokens[i+1:i+1+self.T]
+
 if __name__ == "__main__":
-    
-    
-    itos, stoi = build_char_vocab(s)
-
-    print(f"{itos=}")co
-    print(f"{stoi=}")
-
-
-    code = encode(s, stoi)
-    decoded = decode(code, itos)
-    print(f"{(decoded == s)=}")
-
-    try:
-        encode(s + "€", stoi)
-        
-    except KeyError as e:
-        print(e)
-        
-
-
-    train, val = split_ids(code)
-
-    print(f"{train=}")
-    print(f"{val=}")
-
-    combined = torch.cat((train, val))
-    assert torch.equal(combined, code)
-
-
+    print("Run tests with: uv run pytest tests/test_char_data.py")

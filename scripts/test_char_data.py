@@ -1,4 +1,4 @@
-from char_data import build_char_vocab
+from char_data import CharDataset, build_char_vocab, encode
 
 
 s = """
@@ -27,6 +27,16 @@ On July the twenty-fifth, looking bronzed and fit, I accompanied aunt and child 
 
 itos, stoi = build_char_vocab(s)
 
+print(f"{itos=}")
+print(f"{itos=}")
 
-print(f"{itos=}")
-print(f"{itos=}")
+tokens = encode(s, stoi)
+
+print(f"{tokens=}")
+
+ds = CharDataset(tokens, T=16)
+
+x_train, y_train = next(iter(ds))
+
+print(f"{x_train=}")
+print(f"{y_train=}")
