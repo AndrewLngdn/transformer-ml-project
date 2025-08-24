@@ -15,32 +15,65 @@ def build_char_vocab(s: str) -> Tuple[List[str], Dict[str, int]]:
     return itos, stoi
 
 
-itos, stoi = build_char_vocab(s)
-
-print(f"{itos=}")
-print(f"{stoi=}")
-
 
 def encode(s: str, stoi) -> torch.Tensor:
     ints = []
     for c in s:
-        ints.append(stoi[c])
+        try:
+            ints.append(stoi[c])
+        except KeyError as e:
+            print(f"{c} isn't in vocabulary")
+            raise e
+            
     return torch.tensor(ints, dtype=torch.int64)
 
 
 def decode(t: torch.Tensor, itos) -> str:
-    ints = list(t)
+    ints = t.tolist()
     chars = []
     
     for int in ints:
-        try:
-            chars.append(itos[int])
-        except KeyError:
-            print(f"{int} isn't in vocabulary")
+        chars.append(itos[int])
     
     return "".join(chars)
 
 
-code = encode(s, stoi)
-decoded = decode(code, itos)
-print(f"{(decoded == s)=}")
+def split_ids(chars_tensor: torch.Tensor, frac=0.8) -> Tuple[torch.Tensor, torch.Tensor]:
+    train_len = int(len(chars_tensor) * frac)
+    
+    train_tensor = chars_tensor[:train_len]
+    val_tensor = chars_tensor[train_len:]
+    
+    return train_tensor, val_tensor
+
+
+if __name__ == "__main__":
+    
+    
+    itos, stoi = build_char_vocab(s)
+
+    print(f"{itos=}")co
+    print(f"{stoi=}")
+
+
+    code = encode(s, stoi)
+    decoded = decode(code, itos)
+    print(f"{(decoded == s)=}")
+
+    try:
+        encode(s + "€", stoi)
+        
+    except KeyError as e:
+        print(e)
+        
+
+
+    train, val = split_ids(code)
+
+    print(f"{train=}")
+    print(f"{val=}")
+
+    combined = torch.cat((train, val))
+    assert torch.equal(combined, code)
+
+
