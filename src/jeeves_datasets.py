@@ -1,5 +1,5 @@
-from char_data import CharDataset, build_char_vocab, decode, encode
 
+from char_data import CharDataset, build_char_vocab, decode, encode
 
 s = """
 I don’t know if you have had the same experience, but the snag I always come up against when I’m telling a story is this dashed difficult problem of where to begin it. It’s a thing you don’t want to go wrong over, because one false step and you’re sunk. I mean, if you fool about too long at the start, trying to establish atmosphere, as they call it, and all that sort of rot, you fail to grip and the customers walk out on you.
@@ -26,20 +26,5 @@ On July the twenty-fifth, looking bronzed and fit, I accompanied aunt and child 
 """
 
 itos, stoi = build_char_vocab(s)
-
-print(f"{itos=}")
-print(f"{itos=}")
-
 tokens = encode(s, stoi)
-
-print(f"{tokens=}")
-
-ds = CharDataset(tokens, T=16)
-
-x_train, y_train = next(iter(ds))
-
-print(f"{x_train=}")
-print(f"{y_train=}")
-
-print(f"{decode(x_train, itos)=}")
-print(f"{decode(y_train, itos)=}")
+dataset = CharDataset(tokens, T=16)
