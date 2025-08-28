@@ -7,7 +7,7 @@ class NextCharRNN(nn.Module):
         self.vocab_size = vocab_size
         self.embedding_dim = embedding_dim
         self.embedding = nn.Embedding(vocab_size, embedding_dim=embedding_dim)
-        self.RNN = nn.RNN(input_size=embedding_dim, hidden_size=hidden_size, batch_first=True,dropout=dropout)
+        self.RNN = nn.RNN(input_size=embedding_dim, hidden_size=hidden_size, batch_first=True, dropout=dropout)
         self.out_proj = nn.Linear(in_features=hidden_size, out_features=vocab_size)
         
     def forward(self, X):
