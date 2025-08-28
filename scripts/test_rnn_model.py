@@ -1,4 +1,4 @@
-from jeeves_datasets import stoi, itos, train_dataset, val_dataset, test_dataset
+from jeeves_datasets import get_jeeves_datasets
 from rnn_model import NextCharRNN
 from torch import nn
 from torch.utils.data import DataLoader
@@ -6,9 +6,16 @@ import numpy as np
 
 import torch
 
-vocab_len = len(stoi)
-batch_size = 64
+# Use the new class-based approach with configurable T
+datasets = get_jeeves_datasets(T=64)  # You can change T here!
+train_dataset = datasets.train_dataset
+val_dataset = datasets.val_dataset
+test_dataset = datasets.test_dataset
+
+vocab_len = datasets.vocab_size
+batch_size = 16
 print(f"Length of train dataset: {len(train_dataset)=}")
+print(f"Sequence length T: {datasets.T}")
 
 train_dl = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
 valid_dl = DataLoader(dataset=val_dataset, batch_size=batch_size, shuffle=False)
