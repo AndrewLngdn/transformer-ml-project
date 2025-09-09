@@ -1,5 +1,5 @@
 from torch import nn
-
+import torch
 
 class NextCharRNN(nn.Module):
     def __init__(self, vocab_size, embedding_dim=128, hidden_size=64, dropout=0.0):

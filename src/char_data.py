@@ -14,7 +14,6 @@ def build_char_vocab(s: str) -> Tuple[List[str], Dict[str, int]]:
     return itos, stoi
 
 
-
 def encode(s: str, stoi) -> torch.Tensor:
     ints = []
     for c in s:

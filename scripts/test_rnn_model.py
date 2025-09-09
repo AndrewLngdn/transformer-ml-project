@@ -1,13 +1,27 @@
+from char_lstm import CharLSTM, CharLSTMTie
 from jeeves_datasets import get_jeeves_datasets
 from rnn_model import NextCharRNN
 from torch import nn
 from torch.utils.data import DataLoader
 import numpy as np
+from tqdm import tqdm
 
 import torch
 
-# Use the new class-based approach with configurable T
-datasets = get_jeeves_datasets(T=64)  # You can change T here!
+torch.manual_seed(42)
+
+
+# model_config = {
+#     "model_type": "RNN",
+#     "embedding_dim": 128,
+#     "hidden_size": 64,
+#     "lr": 1e-3,
+#     "grad_clip": True,
+#     "batch_size": 16,
+#     "seq_len": 64
+# }
+
+datasets = get_jeeves_datasets(T=64) 
 train_dataset = datasets.train_dataset
 val_dataset = datasets.val_dataset
 test_dataset = datasets.test_dataset
@@ -20,7 +34,15 @@ print(f"Sequence length T: {datasets.T}")
 train_dl = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
 valid_dl = DataLoader(dataset=val_dataset, batch_size=batch_size, shuffle=False)
 
-model = NextCharRNN(vocab_size=vocab_len)
+# MODEL_TYPE = "LSTM"
+# if MODEL_TYPE == "LSTM":
+#     model = CharLSTM(vocab_size=vocab_len)
+# else:
+#     model = NextCharRNN(vocab_size=vocab_len)
+# model = NextCharRNN(vocab_size=vocab_len, hidden_size=64, embedding_dim=64)
+
+model = CharLSTMTie(vocab_size=vocab_len)
+
 
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 loss_fn = nn.CrossEntropyLoss()
@@ -48,7 +70,7 @@ ema_smoothing = 0.5
 model.to(device)
 
 
-for epoch in range(NUM_EPOCHS):
+for epoch in tqdm(range(NUM_EPOCHS)):
     
     total_epoch_train_loss = 0
     train_token_count = 0
@@ -65,7 +87,6 @@ for epoch in range(NUM_EPOCHS):
         
         y_pred = torch.reshape(y_pred, (-1, vocab_len))
         y_actual = torch.reshape(y_train, (-1,))
-        
         
         loss = loss_fn(y_pred, y_actual)
         loss.backward()
@@ -92,6 +113,7 @@ for epoch in range(NUM_EPOCHS):
     
     total_epoch_valid_loss = 0
     valid_token_count = 0
+    best_val_loss = float("inf")
     
     with torch.no_grad():
         for x_valid, y_valid in valid_dl:
@@ -110,6 +132,7 @@ for epoch in range(NUM_EPOCHS):
             total_epoch_valid_loss += loss_scalar * y_actual.shape[0]
 
         avg_val_loss_per_char = total_epoch_valid_loss / valid_token_count
+
     print(f"epoch {epoch} | train: {avg_train_loss_per_char:.2f} | val: {(total_epoch_valid_loss / valid_token_count):.2f} | val bpc: {avg_val_loss_per_char / np.log(2)}")
         
         
