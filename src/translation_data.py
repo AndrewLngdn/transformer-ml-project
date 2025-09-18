@@ -125,13 +125,17 @@ def decode_one(seq, itos):
     return [itos[i.item()] for i in seq]
     
     
+def decode_batch_py(ids: torch.Tensor, itos: list[str]) -> list[list[str]]:
+    # ids: (B, T)
+    return [[itos[i] for i in row] for row in ids.detach().cpu().tolist()]
+    
 class FraEngDatasets:
     def __init__(self, text, seq_len=32, min_count=3):
-        text = read_txt(path)
         text = _preprocess(text)
         src, tgt = _tokenize(text)
         src, tgt = _pad_or_trunc(src, tgt, seq_len)
         src, tgt = _mask_low_count_tokens(src, tgt, min_count=3)
+        
         
         src_stoi, src_itos = _build_vocabs(src)
         tgt_stoi, tgt_itos = _build_vocabs(tgt)
@@ -189,10 +193,6 @@ if __name__ == "__main__":
         
         if i == 10:
             break
-        
-    
-    
-    breakpoint()
         
         
         
