@@ -71,6 +71,55 @@ class DotProductAttention(torch.nn.Module):
         
         return output
     
+    
+class MultiHeadAttention(torch.nn.Module):
+    def __init__(self, hidden_dim, num_heads, dropout, bias=False, **kwargs):
+        super().__init__()
+        
+        if hidden_dim % num_heads != 0:
+            raise Exception("hidden dim must be divisible by num heads")
+        
+        self.hidden_dim = hidden_dim
+        self.num_heads = num_heads
+        
+        self.dropout = dropout
+        self.bias = bias
+        
+        self.head_dim = hidden_dim // num_heads
+        
+    
+        self.W_k = torch.nn.Linear(hidden_dim, self.num_heads * self.head_dim, bias=bias)
+        self.W_q = torch.nn.Linear(hidden_dim, self.num_heads * self.head_dim, bias=bias)
+        self.W_v = torch.nn.Linear(hidden_dim, self.num_heads * self.head_dim, bias=bias)
+        
+        self.W_out = torch.nn.Linear(self.num_heads * self.head_dim, hidden_dim, bias=bias)
+        
+        self.attention = DotProductAttention(dropout)
+        
+    def forward(self, queries, keys, values, valid_lens):
+        B, Lq, _ = queries.shape
+        B, Lk, _ = keys.shape
+        q_proj = self.W_q(queries)
+        k_proj = self.W_k(keys)
+        v_proj = self.W_v(values)
+        
+        # shape: (B, L, h * d_head) -> (B, L, h, d_head) -> (B, h, L, d_head)
+        # is this wrong?   
+        q_proj = torch.reshape(q_proj, (B, Lq, self.num_heads, self.head_dim)).transpose(1, 2).reshape(self.num_heads * B, Lq, self.head_dim)
+        k_proj = torch.reshape(k_proj, (B, Lk, self.num_heads, self.head_dim)).transpose(1, 2).reshape(self.num_heads * B, Lk, self.head_dim)
+        v_proj = torch.reshape(v_proj, (B, Lk, self.num_heads, self.head_dim)).transpose(1, 2).reshape(self.num_heads * B, Lk, self.head_dim)
+        
+        
+        if valid_lens is not None:
+            valid_lens = torch.repeat_interleave(valid_lens, repeats=self.num_heads, dim=0)
+        
+        attn_out = self.attention(q_proj, k_proj, v_proj, valid_lens)
+        attn_out = attn_out.reshape(B, self.num_heads, Lq, self.head_dim).transpose(1,2).reshape(B, Lq, self.num_heads * self.head_dim)
+
+        out = self.W_out(attn_out)
+        return out
+    
+    
 class AdditiveAttention(torch.nn.Module):
     def __init__(self, num_hiddens, dropout, **kwargs):
         super().__init__()

@@ -1,7 +1,7 @@
 from torch import nn
 import torch
 
-from attention import AdditiveAttention
+from attention import AdditiveAttention, MultiHeadAttention
 
 class Decoder(nn.Module):
     def __init__(self):
@@ -9,23 +9,22 @@ class Decoder(nn.Module):
         
     def forward(self, X, *args):
         raise NotImplementedError
-    
+
 
 class AttentionSeq2SeqDecoder(Decoder):
     def __init__(self, vocab_size, emb_size, hidden_size, num_layers, dropout=0):
         super().__init__()
         self.embedding = nn.Embedding(vocab_size, emb_size)
-        
+
         self.rnn = nn.GRU(emb_size, hidden_size, num_layers=num_layers, dropout=dropout, batch_first=True)
-        
+
         self.dense = nn.LazyLinear(vocab_size)
-        self.attention = AdditiveAttention(hidden_size, dropout=dropout)
-        
-    
+        self.attention = MultiHeadAttention(hidden_size, num_heads=4, dropout=dropout)
+
     def init_state(self, enc_all_outputs, *args):
         self.enc_all_outputs = enc_all_outputs
         return enc_all_outputs
-        
+
     def attention_weights(self):
         return self.attention.attention_scores
     
