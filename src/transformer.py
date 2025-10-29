@@ -64,12 +64,18 @@ class TransformerEncoder(nn.Module):
         
     def forward(self, X, valid_lens):
         # Shape: B, seq_len
-        embs = self.embeddings(X) * (self.embed_dim ** 0.5)
+        B, seq_len = X.shape
+        embs = self.embeddings(X)
         out = self.positional_encoding(embs)
-        
+
+        if valid_lens is not None:
+            invalid_mask = torch.arange(seq_len).repeat(B).reshape(B, -1).to(X.device) >= valid_lens[:, None]
+            out = torch.masked_fill(out, invalid_mask[:, :, None], 0.0)
+
+
         for block in self.blocks:
             out = block(out, valid_lens)
-        
+
         return out
 
 
@@ -152,7 +158,7 @@ class TransformerDecoder(nn.Module):
         return [enc_outputs, enc_valid_lens, [None] * self.num_blocks]
 
     def forward(self, X, state):
-        X = self.positional_encoding(self.embeddings(X) * (self.embed_dim ** 0.5))
+        X = self.positional_encoding(self.embeddings(X))
         self._attention_weights = [[None] * len(self.blocks) for _ in range (2)]
         for i, blk in enumerate(self.blocks):
             X, state = blk(X, state)

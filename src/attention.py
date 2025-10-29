@@ -61,7 +61,7 @@ class DotProductAttention(torch.nn.Module):
         # Shape of keys: (batch_size, no. of key-value pairs, d)
         # Shape of values: (batch_size, no. of key-value pairs, value dimension)
         # Shape of valid_lens: (batch_size,) or (batch_size, no. of queries)
-        scale = queries.shape[-1] / 0.5
+        scale = queries.shape[-1] ** 0.5
         
         QK_t = torch.bmm(queries, keys.transpose(1, 2)) 
         scores = QK_t / scale 
@@ -96,7 +96,7 @@ class MultiHeadAttention(torch.nn.Module):
         
         self.attention = DotProductAttention(dropout)
         
-    def forward(self, queries, keys, values, valid_lens):
+    def forward(self, queries, keys, values, valid_lens=None):
         B, Lq, _ = queries.shape
         B, Lk, _ = keys.shape
         q_proj = self.W_q(queries)
@@ -114,6 +114,11 @@ class MultiHeadAttention(torch.nn.Module):
             valid_lens = torch.repeat_interleave(valid_lens, repeats=self.num_heads, dim=0)
         
         attn_out = self.attention(q_proj, k_proj, v_proj, valid_lens)
+        # if torch.isnan(attn_out).any() or torch.isinf(attn_out).any():
+        #     print("⚠️ NaN or Inf in attention scores!")
+        # else:
+        #     print(f"[attn] mean={attn_out.mean():.3f}, std={attn_out.std():.3f}, max={attn_out.max():.3f}")
+
         attn_out = attn_out.reshape(B, self.num_heads, Lq, self.head_dim).transpose(1,2).reshape(B, Lq, self.num_heads * self.head_dim)
 
         out = self.W_out(attn_out)

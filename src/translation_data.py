@@ -108,7 +108,13 @@ def encode(tokenized_sentences, stoi):
     
     return torch.tensor(encoded_seqs, dtype=torch.int64)
 
-def decode(encoded_sentences, itos):
+def decode(tensor, itos):
+    flat = torch.flatten(tensor)
+    decoded = []
+    for i in flat:
+        decoded.append(itos[i])
+        
+    return decoded
     encoded_sentences = encoded_sentences.tolist()
     decoded_seqs = []
     
@@ -130,7 +136,7 @@ def decode_batch_py(ids: torch.Tensor, itos: list[str]) -> list[list[str]]:
     return [[itos[i] for i in row] for row in ids.detach().cpu().tolist()]
     
 class FraEngDatasets:
-    def __init__(self, text, seq_len=32, min_count=3):
+    def __init__(self, text, seq_len=32, min_count=3, max_len=None):
         text = _preprocess(text)
         src, tgt = _tokenize(text)
         src, tgt = _pad_or_trunc(src, tgt, seq_len)
@@ -157,19 +163,29 @@ class FraEngDatasets:
         self.tgt_stoi = tgt_stoi
         self.tgt_itos = tgt_itos
         
-        self.train_dataset = FraEngDataset(self.train_src, self.train_tgt)
-        self.val_dataset = FraEngDataset(self.val_src, self.val_tgt)
+        self.train_dataset = FraEngDataset(self.train_src, self.train_tgt, max_len=max_len)
+        self.val_dataset = FraEngDataset(self.val_src, self.val_tgt, max_len=max_len)
+        
+    def decode_src(self, tensor):
+        return decode(tensor, self.src_itos)
+        
+    def decode_tgt(self, tensor):
+        return decode(tensor, self.tgt_itos)
         
 
 class FraEngDataset(Dataset):
-    def __init__(self, src_seqs, tgt_seqs):
+    def __init__(self, src_seqs, tgt_seqs, max_len=None):
         assert len(src_seqs[0]) == len(tgt_seqs[0]), "sequences must be the same len"
         super().__init__()
         
         self.src_seqs = src_seqs
         self.tgt_seqs = tgt_seqs
+        self.max_len = max_len
     
     def __len__(self):
+        if self.max_len:
+            return self.max_len
+        
         return len(self.src_seqs)
     
     def __getitem__(self, i):
